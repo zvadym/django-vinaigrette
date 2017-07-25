@@ -2,16 +2,15 @@
 # Distributed under the BSD license. See LICENSE for details.
 from __future__ import print_function
 import codecs
-from optparse import make_option
 import os
 import re
-import django
 
 import vinaigrette
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 from django.core.management.commands import makemessages as django_makemessages
 from django.utils.translation import ugettext
+
 
 def _get_po_paths(locales=[]):
     """Returns paths to all relevant po files in the current project."""
@@ -36,22 +35,23 @@ def _get_po_paths(locales=[]):
                         po_paths.append(os.path.join(dirpath, f))
     return po_paths
 
+
 class Command(django_makemessages.Command):
     help = ("Runs over the entire source tree of the current directory and "
-        "pulls out all strings marked for translation. It creates (or "
-        "updates) a message file in the conf/locale (in the django tree) or "
-        "locale (for project and application) directory. Also includes "
-        "strings from database fields handled by vinaigrette.")
+            "pulls out all strings marked for translation. It creates (or "
+            "updates) a message file in the conf/locale (in the django tree) or "
+            "locale (for project and application) directory. Also includes "
+            "strings from database fields handled by vinaigrette.")
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
         parser.add_argument('--no-vinaigrette', default=True, action='store_false', dest='avec-vinaigrette',
-            help="Don't include strings from database fields handled by vinaigrette."),
+                            help="Don't include strings from database fields handled by vinaigrette."),
         parser.add_argument('--keep-obsolete', default=False, action='store_true', dest='keep-obsolete',
-            help="Don't obsolete strings no longer referenced in code or Viniagrette's fields.")
+                            help="Don't obsolete strings no longer referenced in code or Viniagrette's fields.")
         parser.add_argument('--keep-vinaigrette-temp', default=False, action='store_true', dest='keep-vinaigrette-temp',
-            help="Keep the temporary vinaigrette-deleteme.py file.")
-   
+                            help="Keep the temporary vinaigrette-deleteme.py file.")
+
     requires_system_checks = True
 
     def handle(self, *args, **options):
@@ -69,12 +69,12 @@ class Command(django_makemessages.Command):
             vinfile.write('#coding:utf-8\n')
             if verbosity > 0:
                 self.stdout.write('Vinaigrette is processing database values...')
-            
+
             for model in sorted(vinaigrette._registry.keys(), key=lambda m: m._meta.object_name):
                 strings_seen = set()
                 modelname = "%s.%s" % (model._meta.app_label, model._meta.object_name)
                 reg = vinaigrette._registry[model]
-                fields = reg['fields'] # strings to be translated
+                fields = reg['fields']  # strings to be translated
                 properties = reg['properties']
                 # make query_fields a set to avoid duplicates
                 # only these fields will be retrieved from the db instead of all model's field
@@ -83,9 +83,9 @@ class Command(django_makemessages.Command):
                 # if there are properties, we update the needed query fields and
                 # update the string that will be translated
                 if properties:
-                   fields += properties.keys()
-                   for prop in properties.itervalues():
-                       query_fields.update(prop)
+                    fields += properties.keys()
+                    for prop in properties.itervalues():
+                        query_fields.update(prop)
 
                 manager = reg['manager'] if reg['manager'] else model._default_manager
                 qs = manager.filter(reg['restrict_to']) if reg['restrict_to'] else manager.all()
@@ -118,6 +118,7 @@ class Command(django_makemessages.Command):
                 os.unlink(vinfilepath)
 
         r_lineref = re.compile(r'%s:(\d+)' % re.escape(vinfilepath))
+
         def lineref_replace(match):
             try:
                 return sources[int(match.group(1))]
@@ -144,9 +145,8 @@ class Command(django_makemessages.Command):
             po_paths = _get_po_paths(locales)
 
         if options.get('keep-obsolete'):
-            obsolete_warning = ['#. %s\n' %
-                ugettext('Obsolete translation kept alive with Viniagrette').encode('utf8'),
-                '#: obsolete:0\n']
+            obsolete_warning = ['#. %s\n' % ugettext('Obsolete translation kept alive with Viniagrette').encode('utf8'),
+                                '#: obsolete:0\n']
 
         for po_path in po_paths:
             po_file = open(po_path)
@@ -156,9 +156,7 @@ class Command(django_makemessages.Command):
                 if line.startswith('#: '):
                     new_contents.append(r_lineref.sub(lineref_replace, line))
                 else:
-                    if (line.startswith('#, python-format')
-                      and lastline.startswith('#: ')
-                      and vinfilepath in lastline):
+                    if (line.startswith('#, python-format') and lastline.startswith('#: ') and vinfilepath in lastline):
                         # A database string got labelled as being python-format;
                         # it shouldn't be. Skip the line.
                         continue

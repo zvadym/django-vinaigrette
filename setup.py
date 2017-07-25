@@ -9,18 +9,19 @@ except:
     long_description = description
 
 setup(
-    name = "django-vinaigrette",
-    version = "1.1.0",
-    packages = find_packages(),
-    description = description,
-    author = "Ecometrica",
-    author_email = "dev@ecometrica.com",
-    maintainer = "Rory Geoghegan",
-    maintainer_email = "rory.geoghegan@ecometrica.com",
-    url = "http://github.com/ecometrica/django-vinaigrette/",
-    keywords = ["django", "translation", "gettext",
-        "internationalization", "i18n", "database", "model"],
-    classifiers = [
+    name="django-vinaigrette",
+    version="1.1.0",
+    packages=find_packages(),
+    description=description,
+    author="Ecometrica",
+    author_email="dev@ecometrica.com",
+    maintainer="Rory Geoghegan",
+    maintainer_email="rory.geoghegan@ecometrica.com",
+    url="http://github.com/ecometrica/django-vinaigrette/",
+    keywords=[
+        "django", "translation", "gettext", "internationalization", "i18n", "database", "model"
+        ],
+    classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
@@ -31,5 +32,5 @@ setup(
         "Topic :: Software Development :: Internationalization",
         "Framework :: Django",
         ],
-    long_description = long_description,
+    long_description=long_description,
 )
