@@ -8,6 +8,11 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext, ugettext_lazy, activate, get_language
 
+try:  # Django >= 1.10
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:  # Django < 1.10
+    MiddlewareMixin = object
+
 VERSION = "1.0.1"
 
 class VinaigretteError(Exception):
@@ -25,7 +30,6 @@ def _vinaigrette_post_save(sender, instance, **kwargs):
 
 def register(model, fields, restrict_to=None, manager=None, properties=None):
     """Tell vinaigrette which fields on a Django model should be translated.
-
     Arguments:
     model -- The relevant model class
     fields -- A list or tuple of field names. e.g. ['name', 'nickname']
@@ -34,7 +38,6 @@ def register(model, fields, restrict_to=None, manager=None, properties=None):
     manager -- Optional. A reference to a manager -- e.g. Person.objects -- to use
         when collecting translation strings.
     properties -- A dictionary of "read only" properties that are composed by more that one field e.g. {'full_name': ['first_name', 'last_name']}
-
     Note that both restrict_to and manager are only used when collecting translation
     strings. Gettext lookups will always be performed on relevant fields for all
     objects on registered models.
@@ -78,7 +81,7 @@ class VinaigretteDescriptor(object):
         obj.__dict__[self.name] = value
 
 
-class VinaigrettteAdminLanguageMiddleware(object):
+class VinaigrettteAdminLanguageMiddleware(MiddlewareMixin):
     """
     Use this middleware to ensure the admin is always running under the
     default language, to prevent vinaigrette from clobbering the registered
