@@ -1,5 +1,6 @@
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 description = "Translate Django model data using gettext"
 cur_dir = os.path.dirname(__file__)

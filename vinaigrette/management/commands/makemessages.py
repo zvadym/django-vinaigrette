@@ -1,15 +1,16 @@
 # Copyright (c) Ecometrica. All rights reserved.
 # Distributed under the BSD license. See LICENSE for details.
 from __future__ import print_function
+
 import codecs
 import os
 import re
 
-import vinaigrette
-
 from django.core.management.base import CommandError
 from django.core.management.commands import makemessages as django_makemessages
 from django.utils.translation import ugettext
+
+import vinaigrette
 
 
 def _get_po_paths(locales=[]):
