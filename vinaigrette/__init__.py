@@ -7,14 +7,10 @@ from django.db.models.signals import pre_save, post_save
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.translation import activate, ugettext
-
-try:  # Django >= 1.10
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:  # Django < 1.10
-    MiddlewareMixin = object
+from django.utils.deprecation import MiddlewareMixin
 
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 
 class VinaigretteError(Exception):
@@ -24,7 +20,7 @@ class VinaigretteError(Exception):
 _registry = {}
 
 
-DOUBLE_PERCENTAGE_RE = re.compile(u'%(?!\()')
+DOUBLE_PERCENTAGE_RE = re.compile('%(?!\()')
 
 
 def _vinaigrette_pre_save(sender, instance, **kwargs):
@@ -51,8 +47,8 @@ def register(model, fields, restrict_to=None, manager=None, properties=None):
     strings. Gettext lookups will always be performed on relevant fields for all
     objects on registered models.
     """
-
     global _registry
+
     _registry[model] = {
         'fields': fields,
         'restrict_to': restrict_to,
@@ -62,7 +58,8 @@ def register(model, fields, restrict_to=None, manager=None, properties=None):
 
     for field in fields:
         setattr(model, field, VinaigretteDescriptor(field))
-    model.untranslated = lambda self, fieldname: self.__dict__[fieldname]
+
+    model.untranslated = lambda self, field_name: self.__dict__[field_name]
 
     pre_save.connect(_vinaigrette_pre_save, sender=model)
     post_save.connect(_vinaigrette_post_save, sender=model)
@@ -74,17 +71,19 @@ class VinaigretteDescriptor(object):
         self.name = name
 
     def __get__(self, obj, type=None):
-        if obj:
-            key = obj.__dict__[self.name]
-        else:
+        if not obj:
             return object.__getattribute__(type, self.name)
+
+        key = obj.__dict__[self.name]
+
         if not key:
             return key
+
         if getattr(obj, '_vinaigrette_saving', False):
             return key
 
         # We double over all the keys to mimic how {% trans %} works
-        key = DOUBLE_PERCENTAGE_RE.sub(u'%%', key)
+        key = DOUBLE_PERCENTAGE_RE.sub('%%', key)
         return ugettext(key).replace('%%', '%')
 
     def __set__(self, obj, value):
@@ -99,7 +98,8 @@ class VinaigrettteAdminLanguageMiddleware(MiddlewareMixin):
     sure that this is after any LocaleMiddleware like classes.
     """
 
-    def is_admin_request(self, request):
+    @staticmethod
+    def is_admin_request(request):
         """
         Returns True if this request is for the admin views.
         """
